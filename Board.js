@@ -1,31 +1,28 @@
 const SIZE = 5;
 
-function initializeBoard() {
-  // initialize game pieces
-  let cell = [];
-
-  for (let i = 0; i < SIZE; i++) {
-    cell[i] = [];
-    for (let j = 0; j < SIZE; j++) {
-      if ((i == 0 && (j == 1 || j == 3)) || (i == 3 && j == 2)) {
-
-        cell[i][j] = new Location(i, j, new Token(i, j, Type.HERO));
-      } else if ((i == 1 && j == 2) || (i == 4 && (j == 1 || j == 3))) {
-        cell[i][j] = new Location(i, j, new Token(i, j, Type.AGENT));
-      } else {
-        cell[i][j] = new Location(i, j, new Token(i, j, Type.BLANK));
-      }
-    }
-  }
-  return cell;
-}
-
 class Board {
   constructor(w, h) {
-    this.size = 5;
     this.cellWidth = w / SIZE;
     this.cellHeight = h / SIZE;
-    this.cell = initializeBoard();
+    this.cell = this.initializeBoard();
+  }
+
+  initializeBoard() {
+    let cell = [];
+
+    for (let i = 0; i < SIZE; i++) {
+      cell[i] = [];
+      for (let j = 0; j < SIZE; j++) {
+        if ((i == 0 && (j == 1 || j == 3)) || (i == 3 && j == 2)) {
+          cell[i][j] = new Location(i, j, new Token(i, j, Type.HERO));
+        } else if ((i == 1 && j == 2) || (i == 4 && (j == 1 || j == 3))) {
+          cell[i][j] = new Location(i, j, new Token(i, j, Type.AGENT));
+        } else {
+          cell[i][j] = new Location(i, j, new Token(i, j, Type.BLANK));
+        }
+      }
+    }
+    return cell;
   }
 
   drawBoard() {
@@ -53,7 +50,7 @@ class Board {
   }
 
   getSize() {
-    return this.size;
+    return SIZE;
   }
 
   getCellWidth() {
@@ -69,7 +66,3 @@ class Board {
   }
 
 } // Board
-
-function getSize() {
-  return this.size;
-}

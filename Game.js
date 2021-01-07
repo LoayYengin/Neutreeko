@@ -1,9 +1,4 @@
-const Status = Object.freeze({
-  "ACTIVE": 1,
-  "INACTIVE": 2,
-  "HERO_WIN": 3,
-  "AGENT_WIN": 4
-})
+const Status = Object.freeze({ "ACTIVE": 1, "INACTIVE": 2, "HERO_WIN": 3, "AGENT_WIN": 4 })
 
 class Game {
   constructor(w, h) {
@@ -11,6 +6,8 @@ class Game {
     this.players = this.newPlayers();
     this.turn = this.players[0];
     this.status = Status.INACTIVE;
+
+    this.agentLocations = this.newAgentLocations(); // Location[]
 
     this.row = -1;
     this.col = -1;
@@ -20,7 +17,36 @@ class Game {
     this.endY = -1;
   }
 
-  //============ methods called by main ==============
+  /* returns an array containing 2 players for the game.
+     * a player can either be the hero (true) or agent (false)
+     */
+    newPlayers() {
+      let players = [];
+  
+      players[0] = new Player(true, true);
+      players[1] = new Player(false, false);
+      return players;
+    }
+  
+    /* searches the board and stores the location of the AGENT tokens (black)
+     */
+    newAgentLocations() {
+      let agentLocations = [];
+      let index = 0;
+  
+      for (let i = 0; i < this.board.getSize(); i++) {
+        for (let j = 0; j < this.board.getSize(); j++) {
+          if (this.board.getLocation(i, j).getToken().getType() == Type.AGENT) {
+            agentLocations[index] = new Location(i, j, new Token(i, j, Type.AGENT));
+            index++;
+          }
+        }
+      }
+  
+      return agentLocations;
+    }
+
+  //========== methods called by main ==========
 
   /* calls the methods that draws the grid (the board) and what is at each location (tokens or blank)
    */
@@ -41,7 +67,18 @@ class Game {
       this.parseDeselect();
       this.setEnd();
       this.parseMove();
-      this.checkWinner();
+
+      if (this.checkWinner()) {
+        this.setWinStatus();
+      }
+
+      if (this.status != Status.HERO_WIN && !this.turn.getHero()) {
+        this.parseAgentMove();
+        this.setTurn();
+        if (this.checkWinner()) {
+          this.setWinStatus();
+        }
+      }
     } else {
       this.parseSelect();
       this.setStart();
@@ -57,24 +94,17 @@ class Game {
   }
 
   restartGame() {
-    this.board = new Board(500, 500);
+    this.board = new Board(500, 500); 
+
+    // this.board.initializeBoard();
+    this.turn = this.players[0];
     this.status = Status.INACTIVE;
+    this.agentLocations = this.newAgentLocations();
   }
 
-  //=== functions called only in Game ===
+  //========== functions called only in Game ==========
 
-  /* returns an array containing 2 players for the game.
-   * a player can either be the hero (true) or agent (false)
-   */
-  newPlayers() {
-    let players = [];
-
-    players[0] = new Player(true);
-    players[1] = new Player(false);
-    return players;
-  }
-
-  //============= parseMousePressCommand Methods ========================
+  //========== parseMousePressCommand Methods ==========
 
   /* Check where mouse was clicked, if it is on a token belonging to the player's turn select it
    */
@@ -131,19 +161,24 @@ class Game {
    * if true then there is a winner
    */
   checkWinner() {
-    // check for horizontal winner
-    this.checkWinnerHelper(0, 1, 0, -1, 0, 1);
+    let winFound = false;
 
-    // check for vertical winner
-    this.checkWinnerHelper(1, 0, -1, 0, 1, 0);
-
-    // check for diagonal winner both \ and /
-    this.checkWinnerHelper(1, 1, -1, -1, 1, 1);
-    this.checkWinnerHelper(1, 1, -1, 1, 1, -1);
+    winFound = this.checkWinnerHelper(0, 1, 0, -1, 0, 1); // check for horizontal winner
+    if (!winFound) {
+      winFound = this.checkWinnerHelper(1, 0, -1, 0, 1, 0); // check for vertical winner
+      if (!winFound) {
+        winFound = this.checkWinnerHelper(1, 1, -1, -1, 1, 1); // check for diagonal winner \ 
+        if (!winFound) {
+          winFound = this.checkWinnerHelper(1, 1, -1, 1, 1, -1); // check for diagonal winner /
+        }
+      }
+    }
+    return winFound;
   }
 
   checkWinnerHelper(rowEdge, colEdge, rowAdjacent1, colAdjacent1, rowAdjacent2, colAdjacent2) {
     let currentLocationType;
+    let winFound = false;
 
     for (let i = rowEdge; i < this.board.getSize() - rowEdge; i++) { // row
       for (let j = colEdge; j < this.board.getSize() - colEdge; j++) { // col
@@ -154,37 +189,42 @@ class Game {
           if (currentLocationType == this.board.getLocation(i + rowAdjacent1, j + colAdjacent1).getToken().getType() &&
             currentLocationType == this.board.getLocation(i + rowAdjacent2, j + colAdjacent2).getToken().getType()) {
             this.status = this.turn == this.players[0] ? Status.AGENT_WIN : Status.HERO_WIN;
+
+            winFound = true;
           }
         }
       }
     }
-  }
+    return winFound;
+  } // checkWinnerHelper
 
   setStart() {
     this.startX = this.setRow();
     this.startY = this.setCol();
-    // print("the start location: " + this.startX + ", " + this.startY);
+    print("the start location: " + this.startX + ", " + this.startY);
   }
 
   setEnd() {
     this.endX = this.setRow();
     this.endY = this.setCol();
-    // print("the end location: " + this.endX + ", " + this.endY);
+    print("the end location: " + this.endX + ", " + this.endY);
   }
 
-  // ========================================
+  // ========== setters ==========
 
+  /* set turn to the other player
+  */
   setTurn() {
-    console.log("this was run");
-    console.log(this.turn);
-    console.log("after");
     this.turn = this.turn == this.players[0] ? this.players[1] : this.players[0];
+  }
+
+  setWinStatus() {
+    this.status = this.turn == this.players[0] ? Status.AGENT_WIN : Status.HERO_WIN;
   }
 
   /* set row to where the mouse was clicked and return it
    */
   setRow() {
-
     for (let i = 0; i < this.board.getSize(); i++) {
       if (mouseY > this.board.getCellHeight() * i && mouseY < this.board.getCellHeight() * (i + 1)) {
         this.row = i;
@@ -203,5 +243,96 @@ class Game {
     }
     return this.col;
   }
+
+  //==================== Random AI Movement - always play winning move if it exists ===================
+  /* track the start index in allmoves for the moves of each token 
+   Agent plays the winning move if it exists, otheriwse random
+   */
+  parseAgentMove() {
+    // let maxMoves = 8; // max number of possible moves
+    // let numAgentTokens = 3;
+
+    let allMoves = []; // 2d list of moves for each AGENT token [numAgentTokens][maxMoves]
+    let numMovesCounter = []; // number of moves for each AGENT token
+    let agentLocationIndex = 0; // which token?
+
+    let chosenMove = null; // move to be checked and/or final move played by computer
+    let winMoveFound = false; // is there a winning move?
+
+    // calculates all valid moves of each token, store in 2d array allMoves, return and store number of moves for each token
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 8; j++) {
+        numMovesCounter[i] = this.calculateMoves(allMoves, i); 
+      }
+    }
+
+    //---
+
+    for (let i = 0; !winMoveFound && i < 3; i++) {
+      agentLocationIndex = i;
+      for (let j = 0; !winMoveFound && j < numMovesCounter[i]; j++) {
+        chosenMove = this.aiCheckWinningMove(allMoves, i, numMovesCounter[i]); // check each set of moves
+        if (chosenMove != null) {
+          winMoveFound = true;
+        }
+      }
+    }
+
+    //---
+    if (chosenMove != null) {
+      this.board = chosenMove.updateBoard();
+      this.agentLocations[agentLocationIndex] = new Location(chosenMove.getEnd().getRow(), chosenMove.getEnd().getCol(), new Token(1, 2, Type.AGENT));
+    } else {
+      let i = Math.floor(Math.random(3) * 3);
+      let j = Math.floor(Math.random(numMovesCounter[i]) * numMovesCounter[i]);
+      chosenMove = allMoves[i][j];
+      this.board = chosenMove.updateBoard();
+      this.agentLocations[i] = new Location(chosenMove.getEnd().getRow(), chosenMove.getEnd().getCol(), new Token(1, 2, Type.AGENT));
+    }
+  }//parseAgentMove
+
+  /*
+  *
+   */
+  calculateMoves(allMoves, n) {
+    let size = 5;
+    let index = 0;
+    let end;
+    let aiMove;
+    allMoves[n] = [];
+    let start = this.board.getLocation(this.agentLocations[n].getRow(), this.agentLocations[n].getCol());
+
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+        end = this.board.getLocation(i, j);
+        aiMove = new Move(this.board, start, end);
+
+        if (aiMove.isValid()) { // if a valid move has occured store it in allMoves[][]
+          allMoves[n][index] = aiMove;
+          index++;
+        }
+      }
+    }
+    return index;
+  }
+
+  /*
+  *
+   */
+  aiCheckWinningMove(allMoves, token, numMoves) { //****** can't find a diagonal \ winning move - doesn't see it
+    let winFound = false;
+    let winningMove = null;
+
+    for (let i = 0; (!winFound && i < numMoves); i++) {
+      allMoves[token][i].updateBoard();
+
+      if (this.checkWinner()) {
+        winningMove = allMoves[token][i];
+        winFound = true;
+      }
+      allMoves[token][i].undoBoard();
+    }
+    return winningMove;
+  }//aiCheckWinningMove
 
 } // Game
