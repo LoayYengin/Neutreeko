@@ -58,14 +58,13 @@ function printEndOutput() {
   textAlign(CENTER);
   textSize(36);
   fill(255, 0, 0);
+  
   if (game.getStatus() == Status.HERO_WIN || game.getStatus() == Status.AGENT_WIN) {
     if (game.getStatus() == Status.HERO_WIN) {
       text("White has won the game!", width / 2, height / 2);
     } else if (game.getStatus() == Status.AGENT_WIN) {
       text("Black has won the game!", width / 2, height / 2);
     }
-    textSize(24);
-    text("Press tab to restart", width / 2, height / 2 + offset);
   }
 }
 
