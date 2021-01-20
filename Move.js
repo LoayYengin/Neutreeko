@@ -84,7 +84,6 @@ class Move {
         return valid;
     }
 
-    //=== assessor ===
   getEnd() {
     return this.end;
   }

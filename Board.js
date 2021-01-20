@@ -26,7 +26,7 @@ class Board {
   }
 
   drawBoard() {
-    const BOARD_FILL = color(50, 123, 123);
+    const BOARD_FILL = color(50, 140, 140);
     const BOARD_STROKE = color(0);
 
     for (let i = 0; i < SIZE; i++) {
@@ -65,4 +65,4 @@ class Board {
     return this.cell[row][col];
   }
 
-} // Board
+}

@@ -10,7 +10,6 @@ class Location {
         this.token = token;
     }
 
-    // getters
     getRow() {
         return this.row;
     }
@@ -23,4 +22,4 @@ class Location {
         return this.token;
     }
 
-} // Location
+}

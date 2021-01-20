@@ -319,7 +319,7 @@ class Game {
   /*
   *
    */
-  aiCheckWinningMove(allMoves, token, numMoves) { //****** can't find a diagonal \ winning move - doesn't see it
+  aiCheckWinningMove(allMoves, token, numMoves) {
     let winFound = false;
     let winningMove = null;
 
@@ -333,6 +333,6 @@ class Game {
       allMoves[token][i].undoBoard();
     }
     return winningMove;
-  }//aiCheckWinningMove
+  }
 
-} // Game
+}
